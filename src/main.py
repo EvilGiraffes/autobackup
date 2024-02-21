@@ -1,12 +1,14 @@
 import shutil
 import logging
 import sys
-from typing import Callable
+from typing import Callable, TypeAlias 
 from pathlib import Path
 
 LOG_LEVEL = logging.DEBUG
 FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 RMDIR_PROMPT = "destination already exists, do you wish to remove destination folder?"
+
+InputFn: TypeAlias = Callable[[str], str]
 
 logger: logging.Logger = logging.getLogger("main")
 
@@ -32,7 +34,7 @@ def to_flag(given: str) -> bool:
     else:
         return False
 
-def create_flagged_input(skip: bool) -> Callable[[str], str]:
+def create_flagged_input(skip: bool) -> InputFn:
     def flagged_input(prompt: str) -> str:
         if skip:
             logger.debug("skipping prompt")
@@ -40,7 +42,7 @@ def create_flagged_input(skip: bool) -> Callable[[str], str]:
         return input(prompt)
     return flagged_input
 
-def execute(src: Path, dst: Path, input_fn: Callable[[str], str]) -> None:
+def execute(src: Path, dst: Path, input_fn: InputFn) -> None:
     try:
         shutil.copytree(src, dst)
     except FileExistsError:
