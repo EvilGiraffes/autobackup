@@ -4,13 +4,26 @@ import sys
 from typing import Callable, TypeAlias 
 from pathlib import Path
 
+import log
 LOG_LEVEL = logging.DEBUG
 FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 RMDIR_PROMPT = "destination already exists, do you wish to remove destination folder?"
 
 InputFn: TypeAlias = Callable[[str], str]
+def setup_logger() -> None:
+    global _logger
+    # setup logger handling
+    formatter = logging.Formatter(FORMAT)
+    handlers = [
+        logging.FileHandler("health.log"),
+        logging.StreamHandler(sys.stdout),
+    ]
+    log.add_formatter_to(formatter, handlers)
 
-logger: logging.Logger = logging.getLogger("main")
+    # setup logger
+    log.set_level(LOG_LEVEL)
+    log.set_handlers(handlers)
+    _logger = log.create_logger(__name__)
 
 def Ignore_with_log(src: Path, dst: Path, *, follow_symlinks: bool = True) -> None:
     logger.debug("copying from %s to %s", src, dst)
@@ -57,17 +70,7 @@ def execute(src: Path, dst: Path, input_fn: InputFn) -> None:
             sys.exit(0)
 
 def main():
-    # setup logger handling
-    formatter = logging.Formatter(FORMAT)
-    file_handler = logging.FileHandler("health.log")
-    console_handler = logging.StreamHandler(sys.stdout)
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-
-    # setup logger
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-    logger.setLevel(LOG_LEVEL)
+    setup_logger()
 
     # get the source and destination
     src = Path(ensure_arg(1, "source"))
