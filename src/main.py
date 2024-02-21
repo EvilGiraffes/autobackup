@@ -4,7 +4,6 @@ import sys
 from typing import Callable
 from pathlib import Path
 
-PATH_COUNT = 2
 LOG_LEVEL = logging.DEBUG
 FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 RMDIR_PROMPT = "destination already exists, do you wish to remove destination folder?"
