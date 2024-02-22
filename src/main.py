@@ -3,6 +3,7 @@ import logging
 import sys
 from typing import Callable, TypeAlias 
 from pathlib import Path
+from functools import partial
 
 import log
 import factory
@@ -10,7 +11,7 @@ import execution
 
 LOG_LEVEL = logging.DEBUG
 FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
-RMDIR_PROMPT = "destination already exists, do you wish to remove destination folder? (y/n)"
+RMDIR_PROMPT = "destination already exists, do you wish to remove destination folder? (y/n): "
 
 class ExitCode:
     SUCCESS = 0
@@ -87,7 +88,7 @@ def main():
         )
     else:
         logging.debug("is not flagged input")
-        input_fn = input
+        input_fn = partial(input, RMDIR_PROMPT)
 
     func = factory.get_or_default("copy")
     try:
