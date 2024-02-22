@@ -19,7 +19,7 @@ class ExitCode:
 InputFn: TypeAlias = Callable[[], str]
 
 # Will be initialized in main
-_logger: logging.Logger = None # type: ignore
+_logger: log.LazyLogger = None # type: ignore
 
 def setup_logger() -> None:
     global _logger
@@ -42,8 +42,7 @@ def Ignore_with_log(src: Path, dst: Path, *, follow_symlinks: bool = True) -> No
     try:
         shutil.copy2(src, dst, follow_symlinks = follow_symlinks)
     except Exception as err:
-        _logger.warn("failed to copy from %s to %s: %s", src, dst)
-        _logger.exception(err)
+        _logger.warn("failed to copy from %s to %s: %s", src, dst, exception = err)
 
 def ensure_arg(index: int, name: str):
     try:
@@ -95,7 +94,7 @@ def main():
         func(src, dst, input_fn)
         exit(ExitCode.SUCCESS)
     except Exception as err:
-        _logger.exception(err)
+        _logger.critical("failed to execute", exception = err)
         exit(ExitCode.FAILED)
 
 if __name__ == "__main__":

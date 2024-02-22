@@ -1,15 +1,12 @@
-from typing import TYPE_CHECKING, Optional
 import execution
 
 import log
 
-if TYPE_CHECKING:
-    from logging import Logger
-    from execution import ExecutionFn
+from execution import ExecutionFn
 
 _DEFAULT: 'ExecutionFn' = execution.copy_tree
 
-_logger: 'Logger' = log.create_logger(__name__)
+_logger: log.LazyLogger = log.create_logger(__name__)
 _registry: dict[str, 'ExecutionFn'] = {}
 
 def register(key: str, fn: 'ExecutionFn') -> None:
