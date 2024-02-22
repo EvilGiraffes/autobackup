@@ -33,7 +33,7 @@ def setup_logger() -> None:
 
     # setup logger
     log.set_level(LOG_LEVEL)
-    log.set_handlers(handlers)
+    log.add_handlers(handlers)
     _logger = log.create_logger(__name__)
 
 def Ignore_with_log(src: Path, dst: Path, *, follow_symlinks: bool = True) -> None:

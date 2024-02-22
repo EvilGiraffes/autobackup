@@ -30,24 +30,21 @@ class LazyLogger:
             return
         logger = self._get_or_create()
         logger.warn(template, *args)
-        if exception is not None:
-            logger.exception(exception)
+        _try_log_exception(logger, exception)
 
     def error(self, template: str, *args: Any, exception: Optional[Exception] = None) -> None:
         if _level < logging.ERROR:
             return
         logger = self._get_or_create()
         logger.error(template, *args)
-        if exception is not None:
-            logger.exception(exception)
+        _try_log_exception(logger, exception)
 
     def critical(self, template: str, *args: Any, exception: Optional[Exception] = None) -> None:
         if _level < logging.CRITICAL:
             return
         logger = self._get_or_create()
         logger.critical(template, *args)
-        if exception is not None:
-            logger.exception(exception)
+        _try_log_exception(logger, exception)
 
     def _get_or_create(self) -> Logger:
         if self._logger is None:
@@ -55,9 +52,6 @@ class LazyLogger:
             _emit_callbacks(self._logger, self._callbacks)
         return self._logger
 
-def _emit_callbacks(logger: Logger, callbacks: Iterable[LoggerSetupFn]):
-    for callback in callbacks:
-        callback(logger)
 
 def add_formatter_to(formatter: Formatter, handlers: list[Handler]) -> None:
     for handler in handlers:
@@ -69,12 +63,11 @@ def set_level(level: int) -> None:
     for logger in _loggers:
         logger.setLevel(level)
 
-def set_handlers(handlers: list[Handler]) -> None:
+def add_handlers(handlers: list[Handler]) -> None:
     global _handlers
     _handlers.extend(handlers)
     for logger in _loggers:
-        for handler in handlers:
-            logger.addHandler(handler)
+        _attach_handlers(logger, handlers)
 
 def create_logger(name: str) -> LazyLogger:
     build_fn = partial(_build_logger, name)
@@ -85,8 +78,19 @@ def create_logger(name: str) -> LazyLogger:
     ]
     return LazyLogger(build_fn, logger_setup)
 
+def _try_log_exception(logger: Logger, exception: Optional[Exception]):
+    if exception is not None:
+        logger.exception(exception)
+
+def _attach_handlers(logger: Logger, handlers: Iterable[Handler]):
+    for handler in handlers:
+        logger.addHandler(handler)
+
+def _emit_callbacks(logger: Logger, callbacks: Iterable[LoggerSetupFn]):
+    for callback in callbacks:
+        callback(logger)
+
 def _build_logger(name: str) -> Logger:
-    global _loggers
     logger = logging.getLogger(name)
     return logger
 
@@ -100,3 +104,5 @@ def _set_level(logger: Logger) -> None:
 def _set_handlers(logger: Logger) -> None:
     for handler in _handlers:
         logger.addHandler(handler)
+
+
