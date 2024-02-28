@@ -4,17 +4,17 @@ import log
 
 from execution import ExecutionFn
 
-_DEFAULT: 'ExecutionFn' = execution.copy_tree
+_DEFAULT: ExecutionFn = execution.copy_tree
 
 _logger: log.LazyLogger = log.create_logger(__name__)
-_registry: dict[str, 'ExecutionFn'] = {}
+_registry: dict[str, ExecutionFn] = {}
 
-def register(key: str, fn: 'ExecutionFn') -> None:
+def register(key: str, fn: ExecutionFn) -> None:
     global _registry
     _logger.debug("setting the key %s to function %s", key, fn.__name__)
     _registry[key] = fn
 
-def get_or_default(key: str) -> 'ExecutionFn':
-    _logger.debug("trying to access %s, currently got %s", key, _registry)
+def get_or_default(key: str) -> ExecutionFn:
+    _logger.debug("trying to access %s", key)
     return _registry.get(key, _DEFAULT)
 
