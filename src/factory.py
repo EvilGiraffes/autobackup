@@ -11,7 +11,7 @@ _registry: dict[str, 'ExecutionFn'] = {}
 
 def register(key: str, fn: 'ExecutionFn') -> None:
     global _registry
-    _logger.debug("setting the key %s to function %s", key, fn)
+    _logger.debug("setting the key %s to function %s", key, fn.__name__)
     _registry[key] = fn
 
 def get_or_default(key: str) -> 'ExecutionFn':

@@ -22,8 +22,8 @@ def copy_tree(src: 'Path', dst: 'Path', input_fn: InputFn) -> None:
             copy_tree(src, dst, input_fn)
             return
         else:
-            _logger.info("exiting...")
-            exit(ExitCode.SUCCESS)
+            _logger.error("file at location %s already exists", dst, exception = err)
+            raise
 
 def zip(src: 'Path', dst: 'Path', input_fn: InputFn) -> None:
     raise NotImplemented("not implemented yet")

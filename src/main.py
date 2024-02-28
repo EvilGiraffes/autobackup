@@ -8,6 +8,7 @@ from functools import partial
 import log
 import factory
 import execution
+import process
 
 LOG_LEVEL = logging.DEBUG
 FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -49,8 +50,6 @@ def ensure_arg(index: int, name: str):
     try:
         return sys.argv[index]
     except IndexError:
-        _logger.critical(f"not given {name}")
-        exit(ExitCode.FAILED)
 
 def to_flag(given: str) -> bool:
     given_lower = given.lower()
@@ -58,6 +57,7 @@ def to_flag(given: str) -> bool:
         return True
     else:
         return False
+        process.WithCode.FAILED.log_critical(_logger, "failed to get arg %s", name).exit()
 
 def create_flagged_input(skip: bool) -> InputFn:
     def flagged_input() -> str:
@@ -69,13 +69,17 @@ def create_flagged_input(skip: bool) -> InputFn:
 
 def main():
     setup_logger()
+    _logger.info("program start")
     # register strategies
     strategies = [
         ("copy", execution.copy_tree),
         ("zip", execution.zip),
     ]
+    _logger.info("registering strategies")
     for (key, fn) in strategies:
         factory.register(key, fn)
+
+    strategy = "copy" #TODO get from args
 
     # get the source and destination
     src = Path(ensure_arg(1, "source"))
@@ -91,12 +95,14 @@ def main():
         input_fn = partial(input, RMDIR_PROMPT)
 
     func = factory.get_or_default("copy")
+    _logger.info("trying to get %s strategy", strategy)
+    func = factory.get_or_default(strategy)
     try:
-        func(src, dst, input_fn)
-        exit(ExitCode.SUCCESS)
+        _logger.info("executing strategy...")
+        func(src, dst, noop_error_handler)
+        process.WithCode.SUCCESS.log_exit_info(_logger).exit()
     except Exception as err:
-        _logger.critical("failed to execute", exception = err)
-        exit(ExitCode.FAILED)
+        process.WithCode.FAILED.log_critical(_logger, "strategy failed", exception = err).exit()
 
 if __name__ == "__main__":
     main()
