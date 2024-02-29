@@ -11,10 +11,6 @@ LOG_LEVEL = logging.DEBUG
 FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 RMDIR_PROMPT = "destination already exists, do you wish to remove destination folder? (y/n): "
 
-class ExitCode:
-    SUCCESS = 0
-    FAILED = 1
-
 # Will be initialized in main
 _logger: log.LazyLogger = None # type: ignore
 
