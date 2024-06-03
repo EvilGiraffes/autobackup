@@ -1,66 +1,80 @@
 import logging
 import sys
-from pathlib import Path
 
 import log
 import factory
 import execution
 import process
+import config
 
-LOG_LEVEL = logging.DEBUG
+# Program info
+
+NAME = "Backup automation"
+DESCRIPTION = "Does a backup from source to a destination folder automatically"
+EPILOG = "Automatic backup program"
+
+# Logging config
+
 FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
-RMDIR_PROMPT = "destination already exists, do you wish to remove destination folder? (y/n): "
+DEFAULT_LEVEL = logging.WARNING
 
-# Will be initialized in main
-_logger: log.LazyLogger = None # type: ignore
+_LOGGER: log.LazyLogger = log.create_logger(__name__)
 
-def setup_logger() -> None:
-    global _logger
+def setup_logger(level: log.Level) -> None:
+    global _LOGGER
     # setup logger handling
     formatter = logging.Formatter(FORMAT)
     handlers = [
-        logging.FileHandler("health.log"),
+        logging.FileHandler("../health.log"),
         logging.StreamHandler(sys.stdout),
     ]
     log.add_formatter_to(formatter, handlers)
 
     # setup logger
-    log.set_level(LOG_LEVEL)
+    log.set_level(level)
     log.add_handlers(handlers)
-    _logger = log.create_logger(__name__)
 
-def ensure_arg(index: int, name: str):
-    try:
-        return sys.argv[index]
-    except IndexError:
-        process.WithCode.FAILED.log_critical(_logger, "failed to get arg %s", name).exit()
+def input_continuation(prompt: str) -> bool:
+    while True:
+        given = input(f"{prompt} (y/n): ").lower()
+        if given in ("y", "yes"):
+            return True
+        elif given in ("n", "no"):
+            return False
+        else:
+            print(f"Incorrect input got {given}, did you mean \"no?\"")
 
 def main():
-    setup_logger()
-    _logger.info("program start")
+    data = config.setup(NAME, DESCRIPTION, EPILOG)
+    setup_logger(data.log_level(DEFAULT_LEVEL))
+    _LOGGER.info("program start")
     # register strategies
     strategies = [
         ("copy", execution.copy_tree),
         ("zip", execution.zip),
     ]
-    _logger.info("registering strategies")
+    _LOGGER.info("registering strategies")
     for (key, fn) in strategies:
         factory.register(key, fn)
 
     strategy = "copy" #TODO get from args
 
     # get the source and destination
-    src = Path(ensure_arg(1, "source"))
-    dst = Path(ensure_arg(2, "destination"))
-    _logger.debug("src is %s and dst is %s", src, dst)
-    _logger.info("trying to get %s strategy", strategy)
+    src = data.src()
+    dst = data.dst()
+    _LOGGER.debug("src is %s and dst is %s", src, dst)
+    _LOGGER.info("trying to get %s strategy", strategy)
     func = factory.get_or_default(strategy)
+    if data.force_yes():
+        continuation_fn = lambda _: True
+    else:
+        continuation_fn = input_continuation
+    _LOGGER.info("executing strategy...")
     try:
-        _logger.info("executing strategy...")
-        func(src, dst, lambda _: False)
-        process.WithCode.SUCCESS.log_exit_info(_logger).exit()
+        func(src, dst, continuation_fn)
+        process.WithCode.SUCCESS.log_exit_info(_LOGGER).exit()
     except Exception as err:
-        process.WithCode.FAILED.log_critical(_logger, "strategy failed", exception = err).exit()
+        process.WithCode.FAILED.log_critical(_LOGGER, "strategy failed", exception = err).exit()
 
 if __name__ == "__main__":
     main()
