@@ -35,10 +35,6 @@ def ensure_arg(index: int, name: str):
     except IndexError:
         process.WithCode.FAILED.log_critical(_logger, "failed to get arg %s", name).exit()
 
-# TODO make a proper one
-def noop_error_handler(_: Exception) -> bool:
-    return False
-
 def main():
     setup_logger()
     _logger.info("program start")
@@ -61,7 +57,7 @@ def main():
     func = factory.get_or_default(strategy)
     try:
         _logger.info("executing strategy...")
-        func(src, dst, noop_error_handler)
+        func(src, dst, lambda _: False)
         process.WithCode.SUCCESS.log_exit_info(_logger).exit()
     except Exception as err:
         process.WithCode.FAILED.log_critical(_logger, "strategy failed", exception = err).exit()
