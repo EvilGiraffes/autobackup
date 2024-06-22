@@ -1,7 +1,5 @@
 # Personal ignores
 
-# Run scipt
-target/
 # log files
 *.log
 
