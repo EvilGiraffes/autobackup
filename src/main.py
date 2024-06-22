@@ -4,7 +4,6 @@ import sys
 import log
 import factory
 import execution
-import process
 import config
 
 # Program info
@@ -70,11 +69,9 @@ def main():
     else:
         continuation_fn = input_continuation
     _LOGGER.info("executing strategy...")
-    try:
-        func(src, dst, continuation_fn)
-        process.WithCode.SUCCESS.log_exit_info(_LOGGER).exit()
-    except Exception as err:
-        process.WithCode.FAILED.log_critical(_LOGGER, "strategy failed", exception = err).exit()
+    exitcode = func(src, dst, continuation_fn)
+    exit(exitcode)
+
 
 if __name__ == "__main__":
     main()
