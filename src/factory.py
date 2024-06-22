@@ -1,22 +1,16 @@
 import logging
 
 import log
-import execution
 from execution import ExecutionFn
-
-_DEFAULT: ExecutionFn = execution.copy_tree
 
 _LOGGER: logging.Logger = log.create_logger(__name__)
 _registry: dict[str, ExecutionFn] = {}
 
-
-def register(key: str, fn: ExecutionFn) -> None:
+def set_registry(registry: dict[str, ExecutionFn]) -> None:
     global _registry
-    _LOGGER.debug("setting the key %s to function %s", key, fn.__name__)
-    _registry[key] = fn
+    _LOGGER.debug("setting the registry to %s", registry)
+    _registry = registry
 
-
-def get_or_default(key: str) -> ExecutionFn:
+def try_get(key: str) -> ExecutionFn | None:
     _LOGGER.debug("trying to access %s", key)
-    return _registry.get(key, _DEFAULT)
-
+    return _registry.get(key)

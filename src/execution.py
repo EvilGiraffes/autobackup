@@ -12,6 +12,7 @@ ContinuationFn: TypeAlias = Callable[[str], bool]
 ExecutionFn: TypeAlias = Callable[[Path, Path, ContinuationFn], ExitCode]
 
 def copy_tree(src: Path, dst: Path, continuation_fn: ContinuationFn) -> ExitCode:
+    _LOGGER.info("Trying to copy directory %s to %s", src, dst)
     try:
         shutil.copytree(src, dst, copy_function = _ignore_with_log)
     except FileExistsError:
@@ -24,11 +25,13 @@ def copy_tree(src: Path, dst: Path, continuation_fn: ContinuationFn) -> ExitCode
     return 0
 
 def zip(src: Path, dst: Path, continuation_fn: ContinuationFn) -> ExitCode:
-    raise NotImplemented("not implemented yet")
+    raise NotImplementedError("not implemented yet")
 
 def _ignore_with_log(src: str, dst: str, *, follow_symlinks: bool = True) -> Any:
-    _LOGGER.debug("copying from %s to %s", src, dst)
+    _LOGGER.info("trying to copying file %s to %s", src, dst)
     try:
-        return shutil.copy2(src, dst, follow_symlinks = follow_symlinks)
+        res = shutil.copy2(src, dst, follow_symlinks = follow_symlinks)
+        _LOGGER.debug("copy succeeded")
+        return res
     except OSError:
-        _LOGGER.warn("failed to copy from %s to %s: ", src, dst, exc_info=True)
+        _LOGGER.warn("copy failed: ", exc_info=True)

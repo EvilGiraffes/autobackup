@@ -9,14 +9,16 @@ import config
 
 # Program info
 
-NAME = "ba"
-DESCRIPTION = "Does a backup from source to a destination folder automatically"
+NAME: str = "ba"
+DESCRIPTION: str = "Does a backup from source to a destination folder automatically"
 
 # Logging config
 
-FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
-DEFAULT_LEVEL = logging.WARNING
+FORMAT: str = "%(asctime)s - %(levelname)s - %(message)s"
+DEFAULT_LEVEL: log.Level = logging.WARNING
 
+
+DEFAULT_EXECUTION_FN: execution.ExecutionFn = execution.copy_tree
 _LOGGER: logging.Logger = log.create_logger(__name__)
 
 def logger_setup(level: log.Level) -> None:
@@ -51,39 +53,42 @@ def always_true_continuation(_: str) -> bool:
     return True
 
 
-def main():
+def main() -> None:
+    strategies = {
+        "copy": execution.copy_tree,
+        "zip": execution.zip,
+    }
+
     data = config.setup(
         ArgumentParser(
             prog=NAME,
             description=DESCRIPTION,
         ),
-        DEFAULT_LEVEL
+        DEFAULT_LEVEL,
+        iter(strategies.keys())
     )
+
     logger_setup(data.log_level())
+
     _LOGGER.info("program start")
-    # register strategies
-    strategies = [
-        ("copy", execution.copy_tree),
-        ("zip", execution.zip),
-    ]
-    _LOGGER.info("registering strategies")
-    for (key, fn) in strategies:
-        factory.register(key, fn)
 
-    strategy = "copy" #TODO get from args
+    factory.set_registry(strategies)
 
-    # get the source and destination
-    src = data.src()
-    dst = data.dst()
-    _LOGGER.debug("src is %s and dst is %s", src, dst)
-    _LOGGER.info("trying to get %s strategy", strategy)
-    func = factory.get_or_default(strategy)
-    if data.force_yes():
+    strategy = data.strategy
+    func: execution.ExecutionFn
+    if strategy is None:
+        _LOGGER.debug("No strategy given")
+        func = DEFAULT_EXECUTION_FN
+    else:
+        assert strategy in strategies.keys(), "The strategy being valid should be guaranteed by argparse"
+        func = factory.try_get(strategy) # type: ignore 
+    if data.force_yes:
         continuation_fn = always_true_continuation
     else:
         continuation_fn = input_continuation
+
     _LOGGER.info("executing strategy...")
-    exitcode = func(src, dst, continuation_fn)
+    exitcode = func(data.src, data.dst, continuation_fn)
     exit(exitcode)
 
 
