@@ -17,21 +17,24 @@ DESCRIPTION = "Does a backup from source to a destination folder automatically"
 FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 DEFAULT_LEVEL = logging.WARNING
 
-_LOGGER: log.LazyLogger = log.create_logger(__name__)
+_LOGGER: logging.Logger = log.create_logger(__name__)
 
-def setup_logger(level: log.Level) -> None:
-    global _LOGGER
-    # setup logger handling
+def logger_setup(level: log.Level) -> None:
     formatter = logging.Formatter(FORMAT)
     handlers = [
         logging.FileHandler("../health.log"),
         logging.StreamHandler(sys.stdout),
     ]
-    log.add_formatter_to(formatter, handlers)
+    log.add_formatter_to(formatter, iter(handlers))
 
-    # setup logger
-    log.set_level(level)
-    log.add_handlers(handlers)
+    def setup(logger: logging.Logger) -> None:
+        nonlocal handlers
+        logger.setLevel(level)
+        for handler in handlers:
+            logger.addHandler(handler)
+
+    log.setup(setup)
+
 
 def input_continuation(prompt: str) -> bool:
     while True:
@@ -43,6 +46,11 @@ def input_continuation(prompt: str) -> bool:
         else:
             print(f"Incorrect input got {given}, did you mean \"no?\"")
 
+
+def always_true_continuation(_: str) -> bool:
+    return True
+
+
 def main():
     data = config.setup(
         ArgumentParser(
@@ -51,8 +59,7 @@ def main():
         ),
         DEFAULT_LEVEL
     )
-    print(data.log_level())
-    setup_logger(data.log_level())
+    logger_setup(data.log_level())
     _LOGGER.info("program start")
     # register strategies
     strategies = [
@@ -72,7 +79,7 @@ def main():
     _LOGGER.info("trying to get %s strategy", strategy)
     func = factory.get_or_default(strategy)
     if data.force_yes():
-        continuation_fn = lambda _: True
+        continuation_fn = always_true_continuation
     else:
         continuation_fn = input_continuation
     _LOGGER.info("executing strategy...")
