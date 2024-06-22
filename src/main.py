@@ -1,5 +1,6 @@
 import logging
 import sys
+from argparse import ArgumentParser
 
 import log
 import factory
@@ -8,9 +9,8 @@ import config
 
 # Program info
 
-NAME = "Backup automation"
+NAME = "ba"
 DESCRIPTION = "Does a backup from source to a destination folder automatically"
-EPILOG = "Automatic backup program"
 
 # Logging config
 
@@ -44,8 +44,15 @@ def input_continuation(prompt: str) -> bool:
             print(f"Incorrect input got {given}, did you mean \"no?\"")
 
 def main():
-    data = config.setup(NAME, DESCRIPTION, EPILOG)
-    setup_logger(data.log_level(DEFAULT_LEVEL))
+    data = config.setup(
+        ArgumentParser(
+            prog=NAME,
+            description=DESCRIPTION,
+        ),
+        DEFAULT_LEVEL
+    )
+    print(data.log_level())
+    setup_logger(data.log_level())
     _LOGGER.info("program start")
     # register strategies
     strategies = [

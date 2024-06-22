@@ -1,14 +1,14 @@
-import logging
 from pathlib import Path
 import log
 
 from argparse import ArgumentParser, Namespace
 
 class Config:
-    __slots__ = ("_namespace")
+    __slots__ = ("_namespace", "_default_log_level")
     
-    def __init__(self, namespace: Namespace) -> None:
+    def __init__(self, namespace: Namespace, default_log_level: log.Level) -> None:
         self._namespace = namespace
+        self._default_log_level = default_log_level
 
     def src(self) -> Path:
         return self._namespace.src
@@ -19,34 +19,42 @@ class Config:
     def force_yes(self) -> bool:
         return self._namespace.y
 
-    def log_level(self, default: log.Level) -> log.Level:
-        if self._namespace.force_debug:
-            return logging.DEBUG
-        if default < 1:
-            raise TypeError("The default has to be atleast Debug")
-        verbosity = self._namespace.v
-        if verbosity is None:
-            return default
-        max = default // 10 - 1
-        if verbosity > max:
-            return logging.DEBUG
-        if verbosity >= default:
-            return default
-        return default - verbosity * 10
+    def log_level(self) -> log.Level:
+        def clamp(val: log.Level) -> log.Level:
+            max = self._default_log_level // 10
+            if val < 1:
+                return 0
+            if val > max:
+                return max
+            return val
 
-def setup(name: str, desc: str, epilog: str) -> Config:
-    parser = ArgumentParser(
-        prog=name,
-        description=desc,
-        epilog=epilog,
-    )
-    parser.add_argument("src", type=Path, help="The source folder to copy from")
-    parser.add_argument("dst", type=Path, help="The destination folder to copy to")
-    parser.add_argument("-v", action="count", help="The verbosity of the logging")
+        if self._default_log_level < 10:
+            raise TypeError("The default has to be atleast Debug")
+        return self._default_log_level - clamp(self._namespace.v) * 10
+
+
+def setup(parser: ArgumentParser, default_log_level: log.Level) -> Config:
+    assert default_log_level > 9, "Default level below nine will cause unforseen issues"
     parser.add_argument(
-        "-d", "--force-debug", 
-        action="store_true",
-        help="Forces the program to log in debug mode, incase verbosity does not work"
+        "src",
+        type=Path,
+        help="The source folder to copy from"
     )
-    parser.add_argument("-y", "-yes", action="store_true", help="Forces yes on all prompts")
-    return Config(parser.parse_args())
+    parser.add_argument(
+        "dst",
+        type=Path,
+        help="The destination folder to copy to"
+    )
+    parser.add_argument(
+        "-v",
+        default=0,
+        action="count",
+        help=f"The verbosity of the logging, max verbosity is -{'v' * (default_log_level // 10 - 1)}"
+    )
+    parser.add_argument(
+        "-y", "-yes",
+        action="store_true",
+        help="Forces yes on all prompts"
+    )
+    return Config(parser.parse_args(), default_log_level)
+
