@@ -1,6 +1,5 @@
 import logging
 import shutil
-from sys import exc_info
 from typing import Any, Callable, TypeAlias
 from pathlib import Path
 
