@@ -32,8 +32,7 @@ def logger_setup(level: log.Level) -> None:
     def setup(logger: logging.Logger) -> None:
         nonlocal handlers
         logger.setLevel(level)
-        for handler in handlers:
-            logger.addHandler(handler)
+        log.add_handlers_to(logger, handlers)
 
     log.setup(setup)
 
@@ -78,8 +77,7 @@ def main() -> None:
         _LOGGER.debug("No strategy given")
         func = DEFAULT_EXECUTION_FN
     else:
-        assert strategy in strategies.keys(), "The strategy being valid should be guaranteed by argparse"
-        func = factory.try_get(strategy) # type: ignore 
+        func = factory.get(strategy) # type: ignore 
     if data.force_yes:
         continuation_fn = always_true_continuation
     else:

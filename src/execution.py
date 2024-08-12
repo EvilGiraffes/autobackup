@@ -1,5 +1,6 @@
 import logging
 import shutil
+from sys import exc_info
 from typing import Any, Callable, TypeAlias
 from pathlib import Path
 
@@ -17,11 +18,19 @@ def copy_tree(src: Path, dst: Path, continuation_fn: ContinuationFn) -> ExitCode
         shutil.copytree(src, dst, copy_function = _ignore_with_log)
     except FileExistsError:
         _LOGGER.info("folder already exists")
-        if continuation_fn("destination already exists, do you wish to remove destination folder?"):
+        if continuation_fn("destination already exists, do you wish to overwrite folder?"):
             shutil.rmtree(dst)
             return copy_tree(src, dst, continuation_fn)
         else:
             return 1
+    except FileNotFoundError:
+        msg = "Cannot find folder %s"
+        if src.is_absolute():
+            _LOGGER.critical(msg, src)
+        else:
+            _LOGGER.critical(msg + " [%s]", src, src.absolute())
+        return 1
+
     return 0
 
 def zip(src: Path, dst: Path, continuation_fn: ContinuationFn) -> ExitCode:
