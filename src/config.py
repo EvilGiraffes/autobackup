@@ -1,11 +1,11 @@
 from pathlib import Path
-from typing import Iterable
-import log
-
 from argparse import ArgumentParser, Namespace
 
+import log
+import factory
 
-def setup(parser: ArgumentParser, default_log_level: log.Level, strategies: Iterable[str]) -> "_Config":
+
+def setup(parser: ArgumentParser, default_log_level: log.Level) -> "_Config":
     assert default_log_level > 9, "Default level below nine will cause unforseen issues"
     assert (default_log_level / 10).is_integer(), "Default level must be divisable by 10, use the logging constants"
 
@@ -21,7 +21,7 @@ def setup(parser: ArgumentParser, default_log_level: log.Level, strategies: Iter
     )
     parser.add_argument(
         "-s", "--strategy",
-        choices=list(strategies),
+        choices=factory.strategy_names(),
         help="The strategy to use when doing a backup"
     )
     parser.add_argument(

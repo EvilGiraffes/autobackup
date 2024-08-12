@@ -58,6 +58,7 @@ def main() -> None:
         "copy": execution.copy_tree,
         "zip": execution.zip,
     }
+    factory.set_registry(strategies)
 
     data = config.setup(
         ArgumentParser(
@@ -65,14 +66,11 @@ def main() -> None:
             description=DESCRIPTION,
         ),
         DEFAULT_LEVEL,
-        strategies.keys()
     )
 
     logger_setup(data.log_level())
 
     _LOGGER.info("program start")
-
-    factory.set_registry(strategies)
 
     strategy = data.strategy
     func: execution.ExecutionFn

@@ -1,4 +1,5 @@
 import logging
+from typing import Iterable
 
 import log
 from execution import ExecutionFn
@@ -14,3 +15,8 @@ def set_registry(registry: dict[str, ExecutionFn]) -> None:
 def try_get(key: str) -> ExecutionFn | None:
     _LOGGER.debug("trying to access %s", key)
     return _registry.get(key)
+
+
+def strategy_names() -> Iterable[str]:
+    return _registry.keys()
+
