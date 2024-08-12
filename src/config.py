@@ -4,7 +4,7 @@ import log
 
 from argparse import ArgumentParser, Namespace
 
-class Config:
+class _Config:
     __slots__ = ("_namespace", "_default_log_level")
     
     def __init__(self, namespace: Namespace, default_log_level: log.Level) -> None:
@@ -36,8 +36,6 @@ class Config:
                 return max
             return val
 
-        if self._default_log_level < 10:
-            raise TypeError("The default has to be atleast Debug")
         return self._default_log_level - clamp(self._namespace.v) * 10
 
 
