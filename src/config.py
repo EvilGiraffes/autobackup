@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterator
+from typing import Iterable
 import log
 
 from argparse import ArgumentParser, Namespace
@@ -41,7 +41,7 @@ class Config:
         return self._default_log_level - clamp(self._namespace.v) * 10
 
 
-def setup(parser: ArgumentParser, default_log_level: log.Level, strategies: Iterator[str]) -> Config:
+def setup(parser: ArgumentParser, default_log_level: log.Level, strategies: Iterable[str]) -> Config:
     assert default_log_level > 9, "Default level below nine will cause unforseen issues"
     assert (default_log_level / 10).is_integer(), "Default level must be divisable by 10, use the logging constants"
 

@@ -27,7 +27,7 @@ def logger_setup(level: log.Level) -> None:
         logging.FileHandler("../health.log"),
         logging.StreamHandler(sys.stdout),
     ]
-    log.add_formatter_to(formatter, iter(handlers))
+    log.add_formatter_to(formatter, handlers)
 
     def setup(logger: logging.Logger) -> None:
         nonlocal handlers
@@ -65,7 +65,7 @@ def main() -> None:
             description=DESCRIPTION,
         ),
         DEFAULT_LEVEL,
-        iter(strategies.keys())
+        strategies.keys()
     )
 
     logger_setup(data.log_level())

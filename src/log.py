@@ -1,6 +1,6 @@
 import logging
 from logging import Formatter, Handler, Logger
-from typing import Callable, Iterator, TypeAlias
+from typing import Callable, Iterable, TypeAlias
 
 Level: TypeAlias = int
 LoggerSetupFn: TypeAlias = Callable[[Logger], None]
@@ -13,12 +13,12 @@ def setup(func: LoggerSetupFn) -> None:
     _setup(logging.root)
 
 
-def add_formatter_to(formatter: Formatter, handlers: Iterator[Handler]) -> None:
+def add_formatter_to(formatter: Formatter, handlers: Iterable[Handler]) -> None:
     for handler in handlers:
         handler.setFormatter(formatter)
 
 
-def add_handlers_to(logger: Logger, handlers: Iterator[Handler]):
+def add_handlers_to(logger: Logger, handlers: Iterable[Handler]):
     for handler in handlers:
         logger.addHandler(handler)
 
