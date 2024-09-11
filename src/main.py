@@ -21,7 +21,9 @@ DEFAULT_LEVEL: log.Level = logging.WARNING
 DEFAULT_EXECUTION_FN: execution.ExecutionFn = execution.copy_tree
 _LOGGER: logging.Logger = log.create_logger(__name__)
 
+
 def logger_setup(level: log.Level) -> None:
+    print(level)
     formatter = logging.Formatter(FORMAT)
     handlers = [
         logging.FileHandler("../health.log"),
@@ -53,6 +55,9 @@ def always_true_continuation(_: str) -> bool:
 
 
 def main() -> None:
+    assert DEFAULT_LEVEL >= 10, "Default level below 10 can cause unforseen issues"
+    assert (DEFAULT_LEVEL / 10).is_integer(), "Default level must be divisable by 10"
+
     strategies = {
         "copy": execution.copy_tree,
         "zip": execution.zip,
@@ -64,10 +69,10 @@ def main() -> None:
             prog=NAME,
             description=DESCRIPTION,
         ),
-        DEFAULT_LEVEL,
+        DEFAULT_LEVEL // 10
     )
 
-    logger_setup(data.log_level())
+    logger_setup(log.calculate_level(data.verbosity, DEFAULT_LEVEL))
 
     _LOGGER.info("program start")
 
@@ -77,7 +82,7 @@ def main() -> None:
         _LOGGER.debug("No strategy given")
         func = DEFAULT_EXECUTION_FN
     else:
-        func = factory.get(strategy) # type: ignore 
+        func = factory.get(strategy)  # type: ignore
     if data.force_yes:
         continuation_fn = always_true_continuation
     else:
